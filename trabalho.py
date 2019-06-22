@@ -14,17 +14,17 @@ class Direcao(Enum):
 
 class Fita:
     def __init__(self):
-        self.conteudo = [Simbolo.B, Simbolo.B]
+        self.conteudo = [Simbolo.B,Simbolo.B]
         self.posicao = 0
 
     def ler(self):
-        return self.conteudo[posicao]
+        return self.conteudo[self.posicao]
 
     def escrever(self, simbolo):
-        self.conteudo[posicao] = simbolo
+        self.conteudo[self.posicao] = simbolo
     
     def mover(self, direcao):
-        if direcao == Direcao.ESQUERDA:
+        if direcao == Direcao.right:
             self.posicao = self.posicao + 1
         else:
             self.posicao = self.posicao - 1
@@ -44,8 +44,8 @@ class Transicao:
         self.simEscrito = simEscrito
         self.move = move
     
-    def Imprime(self):
-        print(self.estAtual, self.simLido, self.estProx, self.simEscrito, self.move)
+    def imprime(self):
+        return (self.estAtual, self.simLido, self.estProx, self.simEscrito, self.move)
     
     def getNome(self):
         return self.estAtual
@@ -68,6 +68,9 @@ class Estado:
                 return True
 
         return False
+    def imprime(self):
+        for i in self.transicoes:
+            print(i.estAtual, i.simLido, i.estProx, i.simEscrito, i.move)
     
     def getRepresentacao(self):
         return self.representacao
@@ -104,6 +107,10 @@ class Maquina:
         if (transicao is not None):
             self.fita.escrever(transicao.escrita)
             self.fita.mover(transicao.direcao)
+    def imprime(self):
+        for est in self.estados:
+            est.imprime()
+            
 
 def decoding(mtu):
     fim=False
@@ -169,7 +176,9 @@ def decoding(mtu):
     for est in estados:
         if(c==0):
             maquinaU.adicionaEstado(est,True)
+        maquinaU.adicionaEstado(est)
         c+=1
+    
     return maquinaU
     
         
@@ -187,7 +196,19 @@ def main():
     v=re.match(expressao,texto)
     if(v!=None):
         #print(entrada)
-        decoding(entrada)
+        mtu=decoding(entrada)
+        mtu.imprime()
+
+        fita=Fita()
+        print(fita.conteudo,fita.posicao)
+        fita.escrever(Simbolo.a)
+        fita.mover(Direcao.right)
+        print(fita.conteudo,fita.posicao)
+        fita.mover(Direcao.right)
+        print(fita.conteudo,fita.posicao)
+        fita.mover(Direcao.right)
+        print(fita.conteudo,fita.posicao)
+        
     else:
         print("entrada nao validada")
     arq.close()
