@@ -1,20 +1,10 @@
 import re
-from enum import Enum
-
-class Simbolo(Enum):
-    a = 1
-    b = 2
-    B = 3
-
-class Direcao(Enum):
-    
-    right = 1
-    left = 2
-    
+from copy import copy
+from copy import deepcopy #copiar elementos da fita, sem ser o endereco
 
 class Fita:
     def __init__(self):
-        self.conteudo = [Simbolo.B,Simbolo.B]
+        self.conteudo = ['B','B']
         self.posicao = 0
 
     def ler(self):
@@ -23,10 +13,10 @@ class Fita:
     def escrever(self, simbolo):
         self.conteudo[self.posicao] = simbolo
         if(self.posicao == len(self.conteudo)-1):
-            self.conteudo.append(Simbolo.B)
+            self.conteudo.append('B')
     
     def mover(self, direcao):
-        if direcao == Direcao.right:
+        if direcao == 'R':
             self.posicao = self.posicao + 1
         else:
             self.posicao = self.posicao - 1
@@ -35,13 +25,12 @@ class Fita:
         string = ""
     
     def imprimir(self):
-        print("imprimindo")
+        print("imprimindo conteudo da fita:")
         print(self.conteudo)
+    
+    def tamanho(self):
+        return len(self.conteudo)
         
-
-        
-            
-
 
 class Transicao:
     def __init__(self, estAtual, simLido, estProx, simEscrito, move):
@@ -85,7 +74,9 @@ class Estado:
 
 class Maquina:
     def __init__(self):
-        self.fita = Fita()
+        self.fitaEntrada = Fita()
+        self.fitaTransicao = Fita()
+        self.fitaProcesso = Fita()
         self.estadoInicial = None
         self.estadoAtual = None
 
@@ -107,17 +98,30 @@ class Maquina:
         if inicial:
             self.estadoAtual = estado
         
-    def atuar(self):
-        simboloAtual = self.fita.ler()
+    def processar(self):
+        simboloAtual = self.fitaProcesso.ler()
         transicao = self.estadoAtual.obterTransicao(simboloAtual)
 
         if (transicao is not None):
-            self.fita.escrever(transicao.escrita)
-            self.fita.mover(transicao.direcao)
+            self.fitaProcesso.escrever(transicao.escrita)
+            self.fitaProcesso.mover(transicao.direcao)
     def imprime(self):
         for est in self.estados:
             est.imprime()
-            
+
+    def copiar(self):
+        self.fitaProcesso = deepcopy(self.fitaEntrada)
+
+    def carregarFitaEntrada(self, entrada):
+        self.fitaEntrada = deepcopy(entrada)
+
+    def mostrarConteudoFitas(self):
+        print("Fita 1", end=' ')
+        self.fitaEntrada.imprimir()
+        print("Fita 2", end=' ')
+        self.fitaTransicao.imprimir()
+        print("Fita 3", end=' ')
+        self.fitaProcesso.imprimir()
 
 def decoding(mtu):
     fim=False
@@ -135,28 +139,28 @@ def decoding(mtu):
             elif(i == 1):
                 #simbolo lido
                 if(cont == 1):
-                    simboloLido = Simbolo.a
+                    simboloLido = 'a'
                 elif(cont == 2):
-                    simboloLido = Simbolo.b
+                    simboloLido = 'b'
                 else:
-                    simboloLido = Simbolo.B
+                    simboloLido = 'B'
             elif(i == 2):
                 #estado prox
                 estProx = "q"+str(cont-1)
             elif(i == 3):
                 #simbolo escrito
                 if(cont == 1):
-                    simboloEscrito = Simbolo.a
+                    simboloEscrito = 'a'
                 elif(cont == 2):
-                    simboloEscrito = Simbolo.b
+                    simboloEscrito = 'b'
                 else:
-                    simboloEscrito = Simbolo.B
+                    simboloEscrito = 'B'
             else:
                 #move
                 if(cont == 1):
-                    movimento = Direcao.right
+                    movimento = 'R'
                 else:
-                    movimento = Direcao.left
+                    movimento = 'L'
             cont = 0
             j+=1
         
@@ -183,16 +187,37 @@ def decoding(mtu):
     for est in estados:
         if(c==0):
             maquinaU.adicionaEstado(est,True)
-        maquinaU.adicionaEstado(est)
-        c+=1
+            c+=1
+        else:
+            maquinaU.adicionaEstado(est)
     
+    cont = 0
+    x = j+2
+    fim = False
+    fita = Fita()
+    while(fim == False):
+        if(mtu[x] == 0 and mtu[x+1] == 0):
+            fim = True
+        else:
+            while(mtu[x] != 0):
+                cont+=1
+                x+=1
+            x+=1
+            if(cont == 1):
+                fita.escrever('a')
+            elif(cont == 2):
+                fita.escrever('b')
+            elif(cont == 3):
+                fita.escrever('B')
+            cont = 0
+            fita.mover('R')
+
+    maquinaU.carregarFitaEntrada(fita)
+    maquinaU.copiar()
+    maquinaU.mostrarConteudoFitas()
     return maquinaU
     
         
-
-
-
-
 
 def main():
     #nomearquivo=input()
@@ -205,19 +230,6 @@ def main():
         #print(entrada)
         mtu=decoding(entrada)
         mtu.imprime()
-
-        fita=Fita()
-        print(fita.conteudo,fita.posicao)
-        fita.mover(Direcao.right)
-        fita.escrever(Simbolo.a)
-        fita.mover(Direcao.right)
-        print(fita.conteudo,fita.posicao)
-        fita.escrever(Simbolo.a)
-        print(fita.conteudo,fita.posicao)
-        fita.mover(Direcao.right)
-        print(fita.conteudo,fita.posicao)
-        fita.escrever(Simbolo.b)
-        fita.imprimir()
         
     else:
         print("entrada nao validada")
