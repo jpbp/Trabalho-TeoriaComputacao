@@ -25,12 +25,12 @@ class Fita:
         string = ""
     
     def imprimir(self):
-        print("imprimindo conteudo da fita:")
+        print("imprimindo conteudo da fita, posicao cabecote:", end=' ')
+        print(self.posicao)
         print(self.conteudo)
     
-    def tamanho(self):
-        return len(self.conteudo)
-        
+    def rebobinar(self):
+        self.posicao = 0
 
 class Transicao:
     def __init__(self, estAtual, simLido, estProx, simEscrito, move):
@@ -45,6 +45,7 @@ class Transicao:
     
     def getNome(self):
         return self.estAtual
+    
 
 
 class Estado:
@@ -60,16 +61,19 @@ class Estado:
 
     def obterTransicao(self, simboloLido):
         for transicao in self.transicoes:
-            if transicao.leitura == simboloLido:
-                return True
+            if transicao.simLido == simboloLido:
+                return transicao
+        return None
 
-        return False
     def imprime(self):
         for i in self.transicoes:
             print(i.estAtual, i.simLido, i.estProx, i.simEscrito, i.move)
     
     def getRepresentacao(self):
         return self.representacao
+    
+    def setRepresentacao(self, nome):
+        self.representacao = nome
    
 
 class Maquina:
@@ -96,18 +100,42 @@ class Maquina:
         self.estados.append(estado)
         
         if inicial:
-            self.estadoAtual = estado
+            self.estadoInicial = estado
         
     def processar(self):
         simboloAtual = self.fitaProcesso.ler()
-        transicao = self.estadoAtual.obterTransicao(simboloAtual)
+        transicao = self.estadoInicial.obterTransicao(simboloAtual)
+        cont = 0
+        while(transicao != None and cont < 1000):
+            self.fitaProcesso.escrever(transicao.simEscrito)
+            self.fitaProcesso.mover(transicao.move)
+            #for num in transicao:
+             #   if(num.simLido == simboloAtual):
+              #      nomeProx = num.estProx
+            flag = False
+            for est in self.estados:
+                if(est.representacao == transicao.estProx):
+                    self.estadoAtual = est
+                    flag = True
+            if(flag == False):
+                transicao = None
+            else:
+                simboloAtual = self.fitaProcesso.ler()
+                transicao = self.estadoAtual.obterTransicao(simboloAtual)
+                if transicao != None:
+                    estParou = transicao.estProx
+                    print(transicao.imprime())
+            cont+=1
+        if(cont == 1000):
+            print("MTU pode ter entrado em loop")
+        else:
+            print("Processo finalizado, estado em que parou: ", estParou)
+            print("Resultado na fita")
+            self.fitaProcesso.imprimir()
 
-        if (transicao is not None):
-            self.fitaProcesso.escrever(transicao.escrita)
-            self.fitaProcesso.mover(transicao.direcao)
     def imprime(self):
         for est in self.estados:
-            est.imprime()
+            est.getRepresentacao()
 
     def copiar(self):
         self.fitaProcesso = deepcopy(self.fitaEntrada)
@@ -122,6 +150,8 @@ class Maquina:
         self.fitaTransicao.imprimir()
         print("Fita 3", end=' ')
         self.fitaProcesso.imprimir()
+
+
 
 def decoding(mtu):
     fim=False
@@ -173,21 +203,25 @@ def decoding(mtu):
     verifica = []
     estados = []
     for i in range(len(listaTrans)):
-        if(listaTrans[i].getNome() in verifica):
+        name = listaTrans[i].estAtual
+        if(name in verifica):
             for est in estados:
-                if(est.getRepresentacao() == listaTrans[i].getNome()):
+                represent = str(est.representacao)
+                if(represent == name):
                     est.adicionaTransicao(listaTrans[i])
         else:
-            novo_estado = Estado(listaTrans[i].getNome())
+            print("nome estado:", end=' ')
+            print(name)
+            novo_estado = Estado(name)
             novo_estado.adicionaTransicao(listaTrans[i])
             estados.append(novo_estado)
-            verifica.append(listaTrans[i].getNome())
+            verifica.append(name)
     maquinaU = Maquina()
     c=0
     for est in estados:
         if(c==0):
             maquinaU.adicionaEstado(est,True)
-            c+=1
+            c=1
         else:
             maquinaU.adicionaEstado(est)
     
@@ -211,7 +245,7 @@ def decoding(mtu):
                 fita.escrever('B')
             cont = 0
             fita.mover('R')
-
+    fita.rebobinar()
     maquinaU.carregarFitaEntrada(fita)
     maquinaU.copiar()
     maquinaU.mostrarConteudoFitas()
@@ -223,6 +257,8 @@ def main():
     #nomearquivo=input()
     arq = open('argumento1.txt', 'r')
     texto=str(arq.read())
+    texto = texto.replace('\n', '')
+    print(texto)
     entrada=list(map(int,texto))
     expressao="(000)(((1+)(0)(1+)(0)(1+)(0)(1+)(0)(1+)00))*((1+)(0)(1+)(0)(1+)(0)(1+)(0)(1+))(000)(1+)(01+)*(000)"
     v=re.match(expressao,texto)
@@ -230,6 +266,7 @@ def main():
         #print(entrada)
         mtu=decoding(entrada)
         mtu.imprime()
+        mtu.processar()
         
     else:
         print("entrada nao validada")
