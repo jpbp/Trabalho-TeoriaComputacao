@@ -105,8 +105,7 @@ class Maquina:
     def processar(self):
         simboloAtual = self.fitaProcesso.ler()
         transicao = self.estadoInicial.obterTransicao(simboloAtual)
-        cont = 0
-        while(transicao != None and cont < 1000):
+        while(transicao != None):
             self.fitaProcesso.escrever(transicao.simEscrito)
             self.fitaProcesso.mover(transicao.move)
             #for num in transicao:
@@ -122,16 +121,11 @@ class Maquina:
             else:
                 simboloAtual = self.fitaProcesso.ler()
                 transicao = self.estadoAtual.obterTransicao(simboloAtual)
-                if transicao != None:
-                    estParou = transicao.estProx
-                    print(transicao.imprime())
-            cont+=1
-        if(cont == 1000):
-            print("MTU pode ter entrado em loop")
-        else:
-            print("Processo finalizado, estado em que parou: ", estParou)
-            print("Resultado na fita")
-            self.fitaProcesso.imprimir()
+                estParou = transicao.estProx
+                print(transicao.imprime())
+        print("Processo finalizado, estado em que parou: ", estParou)
+        print("Resultado na fita")
+        self.fitaProcesso.imprimir()
 
     def imprime(self):
         for est in self.estados:
@@ -257,8 +251,6 @@ def main():
     #nomearquivo=input()
     arq = open('argumento1.txt', 'r')
     texto=str(arq.read())
-    texto = texto.replace('\n', '')
-    print(texto)
     entrada=list(map(int,texto))
     expressao="(000)(((1+)(0)(1+)(0)(1+)(0)(1+)(0)(1+)00))*((1+)(0)(1+)(0)(1+)(0)(1+)(0)(1+))(000)(1+)(01+)*(000)"
     v=re.match(expressao,texto)
