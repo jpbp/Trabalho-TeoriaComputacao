@@ -22,6 +22,8 @@ class Fita:
 
     def escrever(self, simbolo):
         self.conteudo[self.posicao] = simbolo
+        if(self.posicao == len(self.conteudo)-1):
+            self.conteudo.append(Simbolo.B)
     
     def mover(self, direcao):
         if direcao == Direcao.right:
@@ -31,6 +33,11 @@ class Fita:
     
     def __str__(self):
         string = ""
+    
+    def imprimir(self):
+        print("imprimindo")
+        print(self.conteudo)
+        
 
         
             
@@ -201,13 +208,16 @@ def main():
 
         fita=Fita()
         print(fita.conteudo,fita.posicao)
+        fita.mover(Direcao.right)
         fita.escrever(Simbolo.a)
         fita.mover(Direcao.right)
         print(fita.conteudo,fita.posicao)
-        fita.mover(Direcao.right)
+        fita.escrever(Simbolo.a)
         print(fita.conteudo,fita.posicao)
         fita.mover(Direcao.right)
         print(fita.conteudo,fita.posicao)
+        fita.escrever(Simbolo.b)
+        fita.imprimir()
         
     else:
         print("entrada nao validada")
