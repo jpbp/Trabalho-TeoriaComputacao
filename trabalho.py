@@ -105,6 +105,9 @@ class Maquina:
     def processar(self):
         simboloAtual = self.fitaProcesso.ler()
         transicao = self.estadoInicial.obterTransicao(simboloAtual)
+        self.fitaTransicao.mover('R')
+        self.fitaTransicao.escrever(self.estadoInicial.representacao)
+        self.fitaTransicao.mover('R')
         while(transicao != None):
             self.fitaProcesso.escrever(transicao.simEscrito)
             self.fitaProcesso.mover(transicao.move)
@@ -119,6 +122,8 @@ class Maquina:
             if(flag == False):
                 transicao = None
             else:
+                self.fitaTransicao.escrever(self.estadoAtual.representacao)
+                self.fitaTransicao.mover('R')
                 simboloAtual = self.fitaProcesso.ler()
                 transicao = self.estadoAtual.obterTransicao(simboloAtual)
                 estParou = transicao.estProx
@@ -259,6 +264,7 @@ def main():
         mtu=decoding(entrada)
         mtu.imprime()
         mtu.processar()
+        mtu.mostrarConteudoFitas()
         
     else:
         print("entrada nao validada")
