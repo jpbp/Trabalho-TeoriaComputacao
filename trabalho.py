@@ -90,7 +90,6 @@ class Maquina:
         self.fitaProcesso = Fita()
         self.estadoInicial = None
         self.estadoAtual = None
-        self.hash = []
         self.estados = []
 
     """
@@ -109,6 +108,8 @@ class Maquina:
         if inicial:
             self.estadoInicial = estado
             self.estadoInicial.contador = 1
+            self.estadoAtual = estado
+            self.estadoAtual.contador = 1
         
     def processar(self):
         simboloAtual = self.fitaProcesso.ler()
@@ -116,36 +117,51 @@ class Maquina:
         self.fitaTransicao.mover('R')
         self.fitaTransicao.escrever(self.estadoInicial.representacao)
         self.fitaTransicao.mover('R')
+        loop = False
+        ciclo = []
+        contMove = 0
+        flagLidoEscrito = False
         while(transicao != None):
             self.fitaProcesso.escrever(transicao.simEscrito)
-            self.fitaProcesso.mover(transicao.move)   
+            self.fitaProcesso.mover(transicao.move)
             flag = False
+            if(self.estadoAtual.contador > 1):
+                if(transicao.simLido == transicao.simEscrito):
+                    flagLidoEscrito = True
+                else:
+                    flagLidoEscrito = False
+                if(transicao.estProx == self.estadoAtual.representacao):
+                    if(transicao.simLido == 'B' and transicao.simEscrito == 'B' and transicao.move == 'R'):
+                        loop = True
+                elif(self.estadoAtual.representacao in ciclo):
+                    if(contMove == 0 and flagLidoEscrito == True):
+                        print("oi")
+                        loop = True
+                    else:
+                        ciclo = []
+                else:
+                    if(transicao.move == 'R'):
+                        contMove+=1
+                    else:
+                        contMove-=1
+                    ciclo.append(self.estadoAtual.representacao)
             for est in self.estados:
                 if(est.representacao == transicao.estProx):
                     self.estadoAtual = est
                     flag = True
-            if(flag == False):
+            if(loop == True):
                 transicao = None
             else:
-                self.estadoAtual.contador+=1 
+                self.estadoAtual.contador+=1
                 self.fitaTransicao.escrever(self.estadoAtual.representacao)
                 self.fitaTransicao.mover('R')
                 simboloAtual = self.fitaProcesso.ler()
                 transicao = self.estadoAtual.obterTransicao(simboloAtual)
-                estParou = self.estadoAtual
-        print("Processo finalizado, estado em que parou: ", estParou)
-        print("Resultado na fita")
-        self.fitaProcesso.imprimir()
-        flag = False
-        '''for est in self.estados:
-            if(est.representacao == estParou):
-                flag = True
-        if(flag == False):
-            parou = Estado(estParou)
-            parou.contador = 1
-            self.estados.append(parou)'''
-        for est in self.estados:
-            est.imprime()
+                estParou = self.estadoAtual.representacao
+        if(loop == True):
+            print("Possivel loop na MTU!")
+        else:
+            print("Processo finalizado, estado em que parou: ", estParou)
 
     def imprime(self):
         for est in self.estados:
@@ -239,8 +255,6 @@ def decoding(mtu):
                 if(represent == name):
                     est.adicionaTransicao(listaTrans[i])
         else:
-            print("nome estado:", end=' ')
-            print(name)
             novo_estado = Estado(name)
             novo_estado.adicionaTransicao(listaTrans[i])
             estados.append(novo_estado)
@@ -276,7 +290,6 @@ def decoding(mtu):
     fita.rebobinar()
     maquinaU.carregarFitaEntrada(fita)
     maquinaU.copiar()
-    maquinaU.mostrarConteudoFitas()
     return maquinaU
     
         
@@ -285,15 +298,14 @@ def main():
     #nomearquivo=input()
     arq = open('argumento1.txt', 'r')
     texto=str(arq.read())
+    texto = texto.replace('\n', '')
     entrada=list(map(int,texto))
     expressao="(000)(((1+)(0)(1+)(0)(1+)(0)(1+)(0)(1+)00))*((1+)(0)(1+)(0)(1+)(0)(1+)(0)(1+))(000)(1+)(01+)*(000)"
     v=re.match(expressao,texto)
     if(v!=None):
         #print(entrada)
         mtu=decoding(entrada)
-        mtu.imprime()
         mtu.processar()
-        mtu.mostrarConteudoFitas()
         
     else:
         print("entrada nao validada")
