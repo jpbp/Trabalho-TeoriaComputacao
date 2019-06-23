@@ -46,12 +46,19 @@ class Transicao:
     def getNome(self):
         return self.estAtual
     
+    def criaEstados(self, lista):
+        if(self.estProx not in lista):
+            estado = Estado(self.estProx)
+            return estado
+        else:
+            return None
 
 
 class Estado:
     def __init__(self, representacao):
         self.representacao = representacao
         self.transicoes = []
+        self.contador = 0
 
     def adicionaTransicao(self, transicao):
         if not isinstance(transicao, Transicao):
@@ -66,8 +73,8 @@ class Estado:
         return None
 
     def imprime(self):
-        for i in self.transicoes:
-            print(i.estAtual, i.simLido, i.estProx, i.simEscrito, i.move)
+        print(self.representacao, end=' ')
+        print(self.contador)
     
     def getRepresentacao(self):
         return self.representacao
@@ -83,7 +90,7 @@ class Maquina:
         self.fitaProcesso = Fita()
         self.estadoInicial = None
         self.estadoAtual = None
-
+        self.hash = []
         self.estados = []
 
     """
@@ -101,6 +108,7 @@ class Maquina:
         
         if inicial:
             self.estadoInicial = estado
+            self.estadoInicial.contador = 1
         
     def processar(self):
         simboloAtual = self.fitaProcesso.ler()
@@ -110,10 +118,7 @@ class Maquina:
         self.fitaTransicao.mover('R')
         while(transicao != None):
             self.fitaProcesso.escrever(transicao.simEscrito)
-            self.fitaProcesso.mover(transicao.move)
-            #for num in transicao:
-             #   if(num.simLido == simboloAtual):
-              #      nomeProx = num.estProx
+            self.fitaProcesso.mover(transicao.move)   
             flag = False
             for est in self.estados:
                 if(est.representacao == transicao.estProx):
@@ -122,15 +127,25 @@ class Maquina:
             if(flag == False):
                 transicao = None
             else:
+                self.estadoAtual.contador+=1 
                 self.fitaTransicao.escrever(self.estadoAtual.representacao)
                 self.fitaTransicao.mover('R')
                 simboloAtual = self.fitaProcesso.ler()
                 transicao = self.estadoAtual.obterTransicao(simboloAtual)
-                estParou = transicao.estProx
-                print(transicao.imprime())
+                estParou = self.estadoAtual
         print("Processo finalizado, estado em que parou: ", estParou)
         print("Resultado na fita")
         self.fitaProcesso.imprimir()
+        flag = False
+        '''for est in self.estados:
+            if(est.representacao == estParou):
+                flag = True
+        if(flag == False):
+            parou = Estado(estParou)
+            parou.contador = 1
+            self.estados.append(parou)'''
+        for est in self.estados:
+            est.imprime()
 
     def imprime(self):
         for est in self.estados:
@@ -149,8 +164,22 @@ class Maquina:
         self.fitaTransicao.imprimir()
         print("Fita 3", end=' ')
         self.fitaProcesso.imprimir()
-
-
+    
+    def verificaEstado(self):
+        listEst = []
+        parametro = []
+        for est in self.estados:
+            parametro.append(est.representacao)
+        for est in self.estados:
+            for tran in est.transicoes:
+                novo = tran.criaEstados(parametro)
+                if(novo is not None):
+                    listEst.append(novo)
+        for i in range(len(listEst)):
+            if(listEst[i].representacao not in parametro):
+                parametro.append(listEst[i].representacao)
+                self.estados.append(listEst[i])
+                
 
 def decoding(mtu):
     fim=False
@@ -201,6 +230,7 @@ def decoding(mtu):
         listaTrans.append(transicao)
     verifica = []
     estados = []
+    maquinaU = Maquina()
     for i in range(len(listaTrans)):
         name = listaTrans[i].estAtual
         if(name in verifica):
@@ -215,7 +245,6 @@ def decoding(mtu):
             novo_estado.adicionaTransicao(listaTrans[i])
             estados.append(novo_estado)
             verifica.append(name)
-    maquinaU = Maquina()
     c=0
     for est in estados:
         if(c==0):
@@ -223,7 +252,7 @@ def decoding(mtu):
             c=1
         else:
             maquinaU.adicionaEstado(est)
-    
+    maquinaU.verificaEstado()
     cont = 0
     x = j+2
     fim = False
