@@ -1,7 +1,6 @@
 import re
 from copy import copy
 from copy import deepcopy #copiar elementos da fita, sem ser o endereco
-
 class Fita:
     def __init__(self):
         self.conteudo = ['B','B']
@@ -16,10 +15,15 @@ class Fita:
             self.conteudo.append('B')
     
     def mover(self, direcao):
+        
+            
         if direcao == 'R':
             self.posicao = self.posicao + 1
         else:
             self.posicao = self.posicao - 1
+            if(self.posicao<0):
+                raise Exception("Corra, os seguidores de Alanzinho Turing vem ai!!!... by: Terra")
+            
     
     def __str__(self):
         string = ""
@@ -162,6 +166,8 @@ class Maquina:
             print("Possivel loop na MTU!")
         else:
             print("Processo finalizado, estado em que parou: ", estParou)
+        for i in self.estados:
+            i.imprime()
 
     def imprime(self):
         for est in self.estados:
@@ -305,8 +311,9 @@ def main():
     if(v!=None):
         #print(entrada)
         mtu=decoding(entrada)
+        mtu.mostrarConteudoFitas()
         mtu.processar()
-        
+        mtu.mostrarConteudoFitas()
     else:
         print("entrada nao validada")
     arq.close()
