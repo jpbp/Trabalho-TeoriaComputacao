@@ -2,6 +2,13 @@ import re
 import sys
 from copy import copy
 from copy import deepcopy #copiar elementos da fita, sem ser o endereco
+import os
+import time
+
+#variáveis para mudar cores no terminal
+RED   = "\033[1;31m"
+RESET = "\033[0;0m"
+
 class Fita:
     def __init__(self):
         self.conteudo = ['B','B']
@@ -33,6 +40,9 @@ class Fita:
         print("imprimindo conteudo da fita, posicao cabecote:", end=' ')
         print(self.posicao)
         print(self.conteudo)
+
+    def getFita(self):
+        return self.conteudo
     
     def rebobinar(self):
         self.posicao = 0
@@ -121,14 +131,22 @@ class Maquina:
         transicao = self.estadoInicial.obterTransicao(simboloAtual)
         self.fitaTransicao.mover('R')
         self.fitaTransicao.escrever(self.estadoInicial.representacao)
+        fita=self.fitaProcesso.getFita()    
+        visualizacao(fita,self.fitaProcesso,self.estadoInicial.getRepresentacao(),simboloAtual)
+        
         self.fitaTransicao.mover('R')
         loop = False
         ciclo = []
         contMove = 0
         flagLidoEscrito = False
+        
         while(transicao != None):
+            
+            
+            
             self.fitaProcesso.escrever(transicao.simEscrito)
             self.fitaProcesso.mover(transicao.move)
+           
             flag = False
             if(self.estadoAtual.contador > 1):
                 if(transicao.simLido == transicao.simEscrito):
@@ -163,16 +181,14 @@ class Maquina:
                 simboloAtual = self.fitaProcesso.ler()
                 transicao = self.estadoAtual.obterTransicao(simboloAtual)
                 estParou = self.estadoAtual.representacao
+            fita=self.fitaProcesso.getFita()
+            visualizacao(fita,self.fitaProcesso,self.estadoAtual.getRepresentacao(),simboloAtual)
         if(loop == True):
             print("Possivel loop na MTU!")
         else:
             print("Processo finalizado, estado em que parou: ", estParou)
-        for i in self.estados:
-            i.imprime()
-
-    def imprime(self):
-        for est in self.estados:
-            est.getRepresentacao()
+        
+        
 
     def copiar(self):
         self.fitaProcesso = deepcopy(self.fitaEntrada)
@@ -203,6 +219,26 @@ class Maquina:
                 parametro.append(listEst[i].representacao)
                 self.estados.append(listEst[i])
                 
+def visualizacao(conteudo,fita,estAtual,simLido):
+    print("--------------------------Visualização da fita--------------------------")
+    print("Estado atual: ",estAtual)
+    print("Simbolo lido: ",simLido)
+    # print("Estado Proximo: ",estProx)
+    # print("Simbolo escrito: ",simEcrito)
+    # print("Direçao: ",move)
+    # print("Posicao da cabeça de leitura: ",posicao)
+    for i in range(len(conteudo)):
+        
+        if(i==fita.posicao):
+            print(RED,end="")
+            print(conteudo[i],end="")
+        else:
+            print(RESET,end="")
+            print(conteudo[i],end="")
+    print(RESET)
+    time.sleep(2)
+    os.system('clear')
+   
 
 def decoding(mtu):
     fim=False
@@ -299,7 +335,7 @@ def decoding(mtu):
     maquinaU.copiar()
     return maquinaU
     
-        
+
 
 def main():
     nomearquivo=sys.argv[1]
@@ -312,9 +348,7 @@ def main():
     if(v!=None):
         #print(entrada)
         mtu=decoding(entrada)
-        mtu.mostrarConteudoFitas()
         mtu.processar()
-        mtu.mostrarConteudoFitas()
     else:
         print("entrada nao validada")
     arq.close()
