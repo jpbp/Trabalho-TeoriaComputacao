@@ -1,4 +1,5 @@
 import re
+import sys
 from copy import copy
 from copy import deepcopy #copiar elementos da fita, sem ser o endereco
 class Fita:
@@ -301,8 +302,8 @@ def decoding(mtu):
         
 
 def main():
-    #nomearquivo=input()
-    arq = open('argumento1.txt', 'r')
+    nomearquivo=sys.argv[1]
+    arq = open(nomearquivo, 'r')
     texto=str(arq.read())
     texto = texto.replace('\n', '')
     entrada=list(map(int,texto))
